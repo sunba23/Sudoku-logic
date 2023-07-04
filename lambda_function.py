@@ -6,7 +6,8 @@ import json
 from time import gmtime, strftime
 import base64
 from io import BytesIO
-from PIL import Image #! not built in
+from PIL import Image   #! not built in
+import numpy as np    #! not built in
 import uuid
 
 from detect_sudoku import detect_sudoku
@@ -27,21 +28,20 @@ def lambda_handler(event, context):
     
     if image.mode != 'L':                           # q: convert to grayscale?
         image = image.convert('L')
-        
-    sudoku = detect_sudoku(image)
+    
+    img_array = np.array(image)
+    sudoku = detect_sudoku(img_array)
     solved_sudoku = solve_sudoku(sudoku)
-    solved_image = create_solution_image(solved_sudoku)
-    
-    with BytesIO() as output_buffer:
-        solved_image.save(output_buffer, format='JPEG')
-        solved_image_bytes = output_buffer.getvalue()
+    solved_image = create_solution_image(solved_sudoku) #returns numpy array
 
-    solved_image_data = base64.b64encode(solved_image_bytes).decode('utf-8')
-    
+    #TODO comment in lambda, here for testing
+    solution_image = Image.fromarray(solved_image)
+    solution_image.show()
 
-    item_id = str(uuid.uuid4())                     # create unique key for id
+    solved_image_data = base64.b64encode(solved_image).decode('utf-8')
     
     #TODO uncomment in lambda
+    # item_id = str(uuid.uuid4())                     # create unique key for id
     # table.put_item(                                 # add solution to the database
     #     Item={
     #         'ID': item_id,
@@ -59,3 +59,11 @@ def lambda_handler(event, context):
     }
 
     return response
+
+
+#TODO comment in lambda, here for testing
+if __name__ == '__main__':
+    with open('test_image.txt', 'r') as f:
+        image_data = f.read()
+    event = {'body': {'image': image_data}}
+    response = lambda_handler(event, None)
