@@ -1,2 +1,2 @@
-def solve_sudoku(image):
-    return image
+def solve_sudoku(sudoku):
+    return sudoku
