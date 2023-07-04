@@ -63,7 +63,12 @@ def lambda_handler(event, context):
 
 #TODO comment in lambda, here for testing
 if __name__ == '__main__':
-    with open('test_image.txt', 'r') as f:
-        image_data = f.read()
-    event = {'body': {'image': image_data}}
+
+    img_path = 'test_sudokus/1.jpg'
+    with open(img_path, 'rb') as image_file:
+        image_data = image_file.read()
+
+    encoded_data = base64.b64encode(image_data).decode('utf-8')
+
+    event = {'body': {'image': encoded_data}}
     response = lambda_handler(event, None)
