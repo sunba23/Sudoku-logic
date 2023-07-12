@@ -4,15 +4,15 @@ import json
 # this library allows interaction with AWS services
 
 from time import gmtime, strftime
-import base64
 from io import BytesIO
-from PIL import Image   #! not built in
-import numpy as np    #! not built in
+import base64
 import uuid
 
-from detect_sudoku import detect_sudoku
-from solve_sudoku import solve_sudoku
-from create_solution_image import create_solution_image
+from PIL import Image
+import numpy as np
+
+from sudoku_extractor import SudokuExtractor
+from sudoku_solver import SudokuSolver
 
 #TODO uncomment in lambda
 # dynamodb = boto3.resource('dynamodb')
@@ -26,13 +26,13 @@ def lambda_handler(event, context):
     image_bytes = base64.b64decode(image_data)      #decode image
     image = Image.open(BytesIO(image_bytes))        #open the image
     
-    if image.mode != 'L':                           # q: convert to grayscale?
-        image = image.convert('L')
-    
+
     img_array = np.array(image)
-    sudoku = detect_sudoku(img_array)
-    solved_sudoku = solve_sudoku(sudoku)
-    solved_image = create_solution_image(solved_sudoku) #returns numpy array
+
+    sudoku_extractor = SudokuExtractor(image=img_array)
+    sudoku = sudoku_extractor.sudoku_array
+    sudoku_solver = SudokuSolver(sudoku=sudoku)
+    solved_image = sudoku_solver.solution_image
 
     #TODO comment in lambda, here for testing
     solution_image = Image.fromarray(solved_image)
@@ -64,7 +64,7 @@ def lambda_handler(event, context):
 #TODO comment in lambda, here for testing
 if __name__ == '__main__':
 
-    img_path = 'test_sudokus/1.jpg'
+    img_path = 'test_sudokus/3.jpg'
     with open(img_path, 'rb') as image_file:
         image_data = image_file.read()
 
