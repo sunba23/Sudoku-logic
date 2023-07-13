@@ -18,5 +18,5 @@ class SudokuSolver:
         '''
         picture solution on input image
         '''
-        return np.array(self.sudoku)
+        return np.array(self.solved_sudoku)
     

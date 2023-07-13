@@ -1,6 +1,5 @@
 from utils import Utils
 
-
 class SudokuExtractor:
     
     def __init__(self, image):
@@ -17,9 +16,10 @@ class SudokuExtractor:
         '''
         find the sudoku grid in the image
         '''
-        conotur = self.utils.largest_contour(self.image)
-        sudoku = self.utils.cut_out_sudoku(self.image, conotur)
-        return sudoku
+        contour = self.utils.largest_contour(self.image.copy())
+        cut_out_sudoku = self.utils.cut_out_sudoku(self.image.copy(), contour)
+        perspective_transformed_sudoku = self.utils.transform_perspective(cut_out_sudoku, contour)
+        return perspective_transformed_sudoku
     
     def find_numbers(self):
         '''
