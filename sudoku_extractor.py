@@ -18,9 +18,8 @@ class SudokuExtractor:
         find the sudoku grid in the image
         '''
         contour = self.utils.largest_contour(self.image.copy())
-        cut_out_sudoku = self.utils.cut_out_sudoku(self.image.copy(), contour)
-        perspective_transformed_sudoku = self.utils.transform_perspective(cut_out_sudoku, contour)
-        return perspective_transformed_sudoku
+        perspective_transformed_cut_out_sudoku = self.utils.cut_out_sudoku(self.image.copy(), contour)
+        return perspective_transformed_cut_out_sudoku
     
     def find_numbers(self):
         '''

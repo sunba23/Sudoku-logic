@@ -30,6 +30,8 @@ class Utils:
         return self.transform_perspective(image, contour)
 
     def transform_perspective(self, image, contour, side_length=300):
+        
+        #TODO: see what the image needs to look like for number recognition, perhaps transform the image w/o preprocessing
 
         corners = self.get_corner_points(contour)
 
@@ -42,7 +44,18 @@ class Utils:
         # cv2.imshow('image', cv2.resize(img_copy, (500, 500)))
         # cv2.waitKey(0)
 
-        return image
+        pt_A, pt_B, pt_C, pt_D = corners[0], corners[1], corners[2], corners[3]
+        input_pts = np.float32([pt_A, pt_B, pt_C, pt_D])
+        output_pts = np.float32([[0, 0],
+                        [0, side_length - 1],
+                        [side_length - 1, side_length - 1],
+                        [side_length - 1, 0]])
+        print(output_pts)
+        M = cv2.getPerspectiveTransform(input_pts,output_pts)
+        transformed_image = cv2.warpPerspective(image,M,(side_length, side_length),flags=cv2.INTER_LINEAR)
+        transformed_image = cv2.flip(transformed_image, 1)  #TODO see why image is unflipped in the first place
+
+        return transformed_image
 
     @staticmethod
     def get_corner_points(contour):
