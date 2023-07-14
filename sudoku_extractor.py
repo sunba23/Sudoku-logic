@@ -1,5 +1,6 @@
 from utils import Utils
 
+
 class SudokuExtractor:
     
     def __init__(self, image):
