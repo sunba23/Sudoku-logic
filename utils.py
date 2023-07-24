@@ -4,7 +4,7 @@ import numpy as np
 
 class Utils:
 
-    def preprocess_image(self, image):
+    def preprocess_original_image(self, image):
         img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         img_blur = cv2.GaussianBlur(img_gray, (5, 5), 3)
         img_threshold = self.thresholdify_image(img_blur)
@@ -30,8 +30,6 @@ class Utils:
         return self.transform_perspective(image, contour)
 
     def transform_perspective(self, image, contour, side_length=300):
-        
-        #TODO: see what the image needs to look like for number recognition, perhaps transform the image w/o preprocessing
 
         corners = self.get_corner_points(contour)
 
@@ -50,7 +48,6 @@ class Utils:
                         [0, side_length - 1],
                         [side_length - 1, side_length - 1],
                         [side_length - 1, 0]])
-        print(output_pts)
         M = cv2.getPerspectiveTransform(input_pts,output_pts)
         transformed_image = cv2.warpPerspective(image,M,(side_length, side_length),flags=cv2.INTER_LINEAR)
         transformed_image = cv2.flip(transformed_image, 1)  #TODO see why image is unflipped in the first place
@@ -67,3 +64,9 @@ class Utils:
 
         return approx_corners[:, 0, :]
 
+
+    def preprocess_sudoku_grid(self, grid):
+        grid = cv2.cvtColor(grid, cv2.COLOR_BGR2GRAY)
+        grid = cv2.GaussianBlur(grid, (5, 5), 3)
+        grid = cv2.adaptiveThreshold(grid,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,2)
+        return grid
