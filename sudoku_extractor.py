@@ -37,4 +37,5 @@ class SudokuExtractor:
         '''
         find the numbers in the preprocessed sudoku grid
         '''
+        sudoku_array = self.utils.read_numbers(self.sudoku_grid)
         return self.sudoku_grid

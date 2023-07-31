@@ -31,12 +31,13 @@ def lambda_handler(event, context):
 
     sudoku_extractor = SudokuExtractor(image=img_array)
     sudoku = sudoku_extractor.sudoku_array
+    # print(sudoku)
     sudoku_solver = SudokuSolver(sudoku=sudoku)
     solved_image = sudoku_solver.solution_image
 
     #TODO comment in lambda, here for testing
-    solution_image = Image.fromarray(solved_image)
-    solution_image.show()
+    # solution_image = Image.fromarray(solved_image)
+    # solution_image.show()
 
     solved_image_data = base64.b64encode(solved_image).decode('utf-8')
     
@@ -64,7 +65,7 @@ def lambda_handler(event, context):
 #TODO comment in lambda, here for testing
 if __name__ == '__main__':
 
-    img_path = 'test_sudokus/3.jpg'
+    img_path = 'test_sudokus/5.jpg'
     with open(img_path, 'rb') as image_file:
         image_data = image_file.read()
 

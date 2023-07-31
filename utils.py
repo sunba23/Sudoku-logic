@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
-
+import pandas as pd
+from skimage.measure import label, regionprops, regionprops_table
 
 class Utils:
 
@@ -9,10 +10,10 @@ class Utils:
         img_blur = cv2.GaussianBlur(img_gray, (5, 5), 3)
         img_threshold = self.thresholdify_image(img_blur)
         return img_threshold
-    
+
     def thresholdify_image(self, image):
         img_threshold = cv2.adaptiveThreshold(image.astype(np.uint8),
-                                              255, 
+                                              255,
                                               cv2.ADAPTIVE_THRESH_MEAN_C,
                                               cv2.THRESH_BINARY, 11, 3)
         return 255 - img_threshold
@@ -51,8 +52,18 @@ class Utils:
         M = cv2.getPerspectiveTransform(input_pts,output_pts)
         transformed_image = cv2.warpPerspective(image,M,(side_length, side_length),flags=cv2.INTER_LINEAR)
         transformed_image = cv2.flip(transformed_image, 1)  #TODO see why image is unflipped in the first place
+        transformed_image = self.zoom_at(transformed_image, zoom=1.04, coord=(side_length/2, side_length/2))    #TODO: find better solution for getting rid of the black border
 
         return transformed_image
+
+    @staticmethod
+    def zoom_at(img, zoom=1, angle=0, coord=None):
+        cy, cx = [ i/2 for i in img.shape[:-1] ] if coord is None else coord[::-1]
+        
+        rot_mat = cv2.getRotationMatrix2D((cx,cy), angle, zoom)
+        result = cv2.warpAffine(img, rot_mat, img.shape[1::-1], flags=cv2.INTER_LINEAR)
+        
+        return result
 
     @staticmethod
     def get_corner_points(contour):
@@ -66,7 +77,27 @@ class Utils:
 
 
     def preprocess_sudoku_grid(self, grid):
+        #! improve the binarization
         grid = cv2.cvtColor(grid, cv2.COLOR_BGR2GRAY)
-        grid = cv2.GaussianBlur(grid, (5, 5), 3)
-        grid = cv2.adaptiveThreshold(grid,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,2)
+        grid = cv2.GaussianBlur(grid, (5, 5), 0)
+        grid = cv2.adaptiveThreshold(grid,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,5)
         return grid
+
+    def read_numbers(self, binary_image):
+        # dividing sudoku image to get 81 cell images
+        cells = []
+        cell_width = binary_image.shape[0] // 9
+        cell_height = binary_image.shape[1] // 9
+        for i in range(9):
+            for j in range(9):
+                cell = binary_image[i*cell_width:(i+1)*cell_width, j*cell_height:(j+1)*cell_height]
+                cell = self.zoom_at(cell, zoom=1.2, coord=(cell_width/2, cell_height/2))    #TODO fix; this works well but is kinda silly
+                cells.append(cell)
+
+        # # visualize cells
+        # for i in range(5):
+        #     cv2.imshow('cell', cv2.resize(cells[i], (100, 100)))
+        #     cv2.waitKey(0)
+        #     cv2.destroyAllWindows()
+
+        return cells
