@@ -1,6 +1,5 @@
 from utils import Utils
 
-
 class SudokuExtractor:
     
     def __init__(self, image):
@@ -10,7 +9,6 @@ class SudokuExtractor:
 
         self.preprocess_image_for_sudoku_edge_detection()
         self.sudoku_grid = self.find_grid()
-        self.preprocess_grid_for_number_recognition()
         self.sudoku_array = self.find_numbers()
 
     def preprocess_image_for_sudoku_edge_detection(self):
@@ -18,12 +16,6 @@ class SudokuExtractor:
         preprocess original image for edge detection
         '''
         self.image = self.utils.preprocess_original_image(self.image)
-
-    def preprocess_grid_for_number_recognition(self):
-        '''
-        preprocess cut-out sudoku grid that is seen from birds eye view for number recognition
-        '''
-        self.sudoku_grid = self.utils.preprocess_sudoku_grid(self.sudoku_grid)
 
     def find_grid(self):
         '''
@@ -35,7 +27,9 @@ class SudokuExtractor:
     
     def find_numbers(self):
         '''
-        find the numbers in the preprocessed sudoku grid
+        find the numbers in the preprocessed sudoku grid and return sudoku array
         '''
-        sudoku_array = self.utils.read_numbers(self.sudoku_grid)
+        cells_images = self.utils.segment_image(self.sudoku_grid)
+        sudoku_array = self.utils.predict_numbers(cells_images)
+
         return self.sudoku_grid

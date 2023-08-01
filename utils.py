@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import pandas as pd
-from skimage.measure import label, regionprops, regionprops_table
+from digit_recognition.digit_recognition import predict_number, digit_recognition_sequential_model
 
 class Utils:
 
@@ -76,22 +76,15 @@ class Utils:
         return approx_corners[:, 0, :]
 
 
-    def preprocess_sudoku_grid(self, grid):
-        #! improve the binarization
-        grid = cv2.cvtColor(grid, cv2.COLOR_BGR2GRAY)
-        grid = cv2.GaussianBlur(grid, (5, 5), 0)
-        grid = cv2.adaptiveThreshold(grid,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,5)
-        return grid
-
-    def read_numbers(self, binary_image):
+    def segment_image(self, sudoku_image):
         # dividing sudoku image to get 81 cell images
         cells = []
-        cell_width = binary_image.shape[0] // 9
-        cell_height = binary_image.shape[1] // 9
+        cell_width = sudoku_image.shape[0] // 9
+        cell_height = sudoku_image.shape[1] // 9
         for i in range(9):
             for j in range(9):
-                cell = binary_image[i*cell_width:(i+1)*cell_width, j*cell_height:(j+1)*cell_height]
-                cell = self.zoom_at(cell, zoom=1.2, coord=(cell_width/2, cell_height/2))    #TODO fix; this works well but is kinda silly
+                cell = sudoku_image[i*cell_width:(i+1)*cell_width, j*cell_height:(j+1)*cell_height]
+                cell = self.zoom_at(cell, zoom=1.3, coord=(cell_width/2, cell_height/2))    #TODO fix; this works well but is kinda silly
                 cells.append(cell)
 
         # # visualize cells
@@ -101,3 +94,32 @@ class Utils:
         #     cv2.destroyAllWindows()
 
         return cells
+
+    def preprocess_cell_image(self, cell_image):
+        cell_image = cv2.resize(cell_image, (28, 28))
+        #convert to grayscale
+        cell_image = cv2.cvtColor(cell_image, cv2.COLOR_BGR2GRAY)
+        #normalize pixels to range [0, 1]
+        cell_image = cell_image.astype('float32') / 255
+
+        return cell_image
+
+    def predict_numbers(self, cells_images):
+        sudoku_array = []
+        model = digit_recognition_sequential_model()
+        cells_images = enumerate(cells_images)
+        for index, cell_image in cells_images:
+            # preprocess cell image for number recognition
+            cell_image = self.preprocess_cell_image(cell_image)
+
+            # show the first 9 cells
+            # if index < 9:
+            #     cv2.imshow('cell', cv2.resize(cell_image, (100, 100)))
+            #     cv2.waitKey(0)
+            #     cv2.destroyAllWindows()
+
+            prediction = predict_number(cell_image, model)
+            sudoku_array.append(prediction)
+            print('prediction: ', prediction)
+        print('sudoku array: ', sudoku_array)
+        return sudoku_array
