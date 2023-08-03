@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 import pandas as pd
-from digit_recognition.digit_recognition import predict_number, digit_recognition_sequential_model
+from keras.models import load_model
+from keras.datasets import mnist
 
 class Utils:
 
@@ -95,31 +96,39 @@ class Utils:
 
         return cells
 
-    def preprocess_cell_image(self, cell_image):
+    @staticmethod
+    def preprocess_cell_image(cell_image):
         cell_image = cv2.resize(cell_image, (28, 28))
-        #convert to grayscale
-        cell_image = cv2.cvtColor(cell_image, cv2.COLOR_BGR2GRAY)
+        cell_image = np.invert(cell_image)
         #normalize pixels to range [0, 1]
         cell_image = cell_image.astype('float32') / 255
-
+        cell_image = np.expand_dims(cell_image, axis=0)
         return cell_image
 
-    def predict_numbers(self, cells_images):
+    def predict_numbers(self, cells_images, threshold=0.95):
+        model = load_model('digit_recognition_model_new_2.keras')
+        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
         sudoku_array = []
-        model = digit_recognition_sequential_model()
         cells_images = enumerate(cells_images)
         for index, cell_image in cells_images:
-            # preprocess cell image for number recognition
-            cell_image = self.preprocess_cell_image(cell_image)
+            cell_image = self.preprocess_cell_image(cell_image[:, :, 0])
 
-            # show the first 9 cells
+            prediction = model.predict(cell_image)
+            predicted_number = np.argmax(prediction)
+            max_prob = np.max(prediction)
+            
+            if max_prob >= threshold:
+                sudoku_array.append(predicted_number)
+            else:
+                sudoku_array.append(0)
+
+            # #TESTING PREDICTIONS: show and predict numbers on the first 9 cells
             # if index < 9:
-            #     cv2.imshow('cell', cv2.resize(cell_image, (100, 100)))
+            #     print('Prediction:', predicted_number, 'Probability:', max_prob)
+            #     cv2.imshow('cell', cv2.resize(cell_image.squeeze(), (100, 100)))
             #     cv2.waitKey(0)
             #     cv2.destroyAllWindows()
 
-            prediction = predict_number(cell_image, model)
-            sudoku_array.append(prediction)
-            print('prediction: ', prediction)
         print('sudoku array: ', sudoku_array)
         return sudoku_array
