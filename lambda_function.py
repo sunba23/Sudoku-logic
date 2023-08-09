@@ -65,11 +65,14 @@ def lambda_handler(event, context):
 #TODO comment in lambda, here for testing
 if __name__ == '__main__':
 
-    img_path = 'test_sudokus/5.jpg'
-    with open(img_path, 'rb') as image_file:
-        image_data = image_file.read()
+    # img_path = 'test_sudokus/5.jpg'
+    # with open(img_path, 'rb') as image_file:
+    #     image_data = image_file.read()
 
-    encoded_data = base64.b64encode(image_data).decode('utf-8')
+    # encoded_data = base64.b64encode(image_data).decode('utf-8')
 
-    event = {'body': {'image': encoded_data}}
-    response = lambda_handler(event, None)
+    # event = {'body': {'image': encoded_data}}
+    # response = lambda_handler(event, None)
+    dummy_sudoku = 'sudoku'
+    solver = SudokuSolver(sudoku=dummy_sudoku)
+    solver.solve_sudoku()
