@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from keras.models import load_model
 from keras.datasets import mnist
+import pytesseract
 
 class Utils:
 
@@ -50,15 +51,15 @@ class Utils:
         M = cv2.getPerspectiveTransform(input_pts,output_pts)
         transformed_image = cv2.warpPerspective(image,M,(side_length, side_length),flags=cv2.INTER_LINEAR)
         transformed_image = cv2.flip(transformed_image, 1)  #TODO see why image is unflipped in the first place
-        transformed_image = self.zoom_at(transformed_image, zoom=1.04, coord=(side_length/2, side_length/2))    #TODO: find better solution for getting rid of the black border
         return transformed_image
 
     @staticmethod
     def zoom_at(img, zoom=1, angle=0, coord=None):
-        cy, cx = [ i/2 for i in img.shape[:-1] ] if coord is None else coord[::-1]
-        rot_mat = cv2.getRotationMatrix2D((cx,cy), angle, zoom)
-        result = cv2.warpAffine(img, rot_mat, img.shape[1::-1], flags=cv2.INTER_LINEAR)
+        cy, cx = [ i/2 for i in img.shape ] if len(img.shape) == 2 else (coord[1], coord[0])
+        rot_mat = cv2.getRotationMatrix2D((cx, cy), angle, zoom)
+        result = cv2.warpAffine(img, rot_mat, img.shape[::-1], flags=cv2.INTER_LINEAR)
         return result
+
 
     @staticmethod
     def get_corner_points(contour):
@@ -69,50 +70,55 @@ class Utils:
         return approx_corners[:, 0, :]
 
     def segment_image(self, sudoku_image):
-        # dividing sudoku image to get 81 cell images
+        # dividing sudoku image using contours and returning list of cells sorted as in sudoku
         cells = []
-        cell_width = sudoku_image.shape[0] // 9
-        cell_height = sudoku_image.shape[1] // 9
-        for i in range(9):
-            for j in range(9):
-                cell = sudoku_image[i*cell_width:(i+1)*cell_width, j*cell_height:(j+1)*cell_height]
-                cell = self.zoom_at(cell, zoom=1.3, coord=(cell_width/2, cell_height/2))    #TODO fix; this works well but is kinda silly
-                cells.append(cell)
-        # # visualize cells
-        # for i in range(5):
-        #     cv2.imshow('cell', cv2.resize(cells[i], (100, 100)))
-        #     cv2.waitKey(0)
-        #     cv2.destroyAllWindows()
+        img_gray = cv2.cvtColor(sudoku_image, cv2.COLOR_BGR2GRAY)
+        img_blur = cv2.GaussianBlur(img_gray, (5, 5), 3)
+        img_threshold = self.thresholdify_image(img_blur)
+        contours, h = cv2.findContours(
+                img_threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        for contour in contours:
+            x, y, w, h = cv2.boundingRect(contour)
+            middle_point = (x + w // 2, y + h // 2)
+            if w > 20 and h > 20 and w < 100 and h < 100:
+                cell_with_coords = sudoku_image[y:y + h, x:x + w], middle_point
+                cells.append(cell_with_coords)
+
+        # sorting cells by y coordinate
+        cells.sort(key=lambda x: x[1][1])
+        #creating 9 lists of 9 cells
+        cells = [cells[i:i + 9] for i in range(0, len(cells), 9)]
+        #sorting each row by x coordinate
+        for row in cells:
+            row.sort(key=lambda x: x[1][0])
+        #flattening the list
+        cells = [cell for row in cells for cell in row]
+        #removing coordinates so that only images remain
+        cells = [cell[0] for cell in cells]
+        
         return cells
 
     @staticmethod
     def preprocess_cell_image(cell_image):
-        cell_image = cv2.resize(cell_image, (28, 28))
-        cell_image = np.invert(cell_image)
-        #normalize pixels to range [0, 1]
-        cell_image = cell_image.astype('float32') / 255
-        cell_image = np.expand_dims(cell_image, axis=0)
-        return cell_image
+        # for tesseract to work properly, we need to preprocess the image
+        cell_image[cell_image < 100] = 0
+        cell_image[cell_image >= 100] = 255
+        zoomed = Utils.zoom_at(cell_image, zoom=1.21)
+        denoised = cv2.fastNlMeansDenoising(zoomed, None, 10, 7, 21)
+        img_rgb = cv2.cvtColor(denoised, cv2.COLOR_GRAY2RGB)
+        bordered = cv2.copyMakeBorder(img_rgb, 3, 3, 3, 3, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        return bordered
 
     def predict_numbers(self, cells_images, threshold=0.95):
-        model = load_model('digit_recognition_model_new_2.keras')
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+        #! in lambda use tesseract lambda layer
+        pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
         sudoku_array = []
-        cells_images = enumerate(cells_images)
-        for index, cell_image in cells_images:
+        for cell_image in cells_images:
             cell_image = self.preprocess_cell_image(cell_image[:, :, 0])
-            prediction = model.predict(cell_image)
-            predicted_number = np.argmax(prediction)
-            max_prob = np.max(prediction) 
-            if max_prob >= threshold:
-                sudoku_array.append(predicted_number)
-            else:
-                sudoku_array.append(0)
-            # #TESTING PREDICTIONS: show and predict numbers on the first 9 cells
-            # if index < 9:
-            #     print('Prediction:', predicted_number, 'Probability:', max_prob)
-            #     cv2.imshow('cell', cv2.resize(cell_image.squeeze(), (100, 100)))
-            #     cv2.waitKey(0)
-            #     cv2.destroyAllWindows()
-        print('sudoku array: ', sudoku_array)
-        return sudoku_array
+            prediction = pytesseract.image_to_string(cell_image, config='--psm 10 -c tessedit_char_whitelist=123456789')
+            sudoku_array.append(prediction)
+
+        converted_sudoku = [cell.strip() for cell in sudoku_array]
+        return converted_sudoku

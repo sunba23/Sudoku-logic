@@ -20,15 +20,16 @@ def solve_sudoku_alg(grid, row, column):
                 if solve_sudoku_alg(grid, row, column+1):
                     return True # we want to check if that number is correct in that place
                 grid[row][column] = 0
+    return False # we checked every number and nothing worked
 
 
 class SudokuSolver:
 
-    def __init__(self, sudoku):
-
+    def __init__(self, sudoku=None):
         # when testing number detection, comment out self.get_dummy_sudokus line; when testing algorithm, comment out self.sudoku = sudoku line
-        # self.sudoku = sudoku
-        self.sudoku = self.get_dummy_sudokus("algorithm_testing_sudokus.txt")[0]
+        self.sudoku = sudoku
+        # self.sudoku = self.get_dummy_sudokus("algorithm_testing_sudokus.txt")[0]
+        print('sudoku solver got input: ', self.sudoku)
         self.grid = [[0] * 9 for _ in range(9)]
         self.solved_sudoku = self.solve_sudoku()
         self.solution_image = self.create_solution_image()
@@ -38,7 +39,7 @@ class SudokuSolver:
         for i in range(9):
             for j in range(9):
                 char = self.sudoku[i * 9 + j]
-                if char != '.':
+                if char != '':
                     self.grid[i][j] = int(char)
 
     def solve_sudoku(self):
@@ -47,7 +48,6 @@ class SudokuSolver:
         '''
         self.prepare_sudoku()
         solve_sudoku_alg(self.grid, 0, 0)
-        print(self.grid)
         return self.grid
     
     def create_solution_image(self):
