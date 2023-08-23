@@ -29,16 +29,13 @@ def lambda_handler(event, context):
 
     img_array = np.array(image)
 
+    # extract the sudoku and create sudoku array
     sudoku_extractor = SudokuExtractor(image=img_array)
     sudoku = sudoku_extractor.sudoku_array
-    sudoku_solver = SudokuSolver(sudoku=sudoku)
-    solved_image = sudoku_solver.solution_image
 
-    #TODO comment in lambda, here for testing
-    # solution_image = Image.fromarray(solved_image)
-    # solution_image.show()
-
-    solved_image_data = base64.b64encode(solved_image).decode('utf-8')
+    # send sudoku array back to user so that they can correct it
+    sudoku_response_array = sudoku
+    print('sudoku array: ', sudoku_response_array)
     
     #TODO uncomment in lambda
     # item_id = str(uuid.uuid4())                     # create unique key for id
@@ -50,7 +47,7 @@ def lambda_handler(event, context):
     #     }
     # )
     
-    response_body = {'solution': solved_image_data}
+    response_body = {'sudoku': sudoku_response_array}
         
     response = {
         'statusCode': 200,
