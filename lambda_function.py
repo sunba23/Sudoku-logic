@@ -72,6 +72,3 @@ if __name__ == '__main__':
 
     event = {'body': {'image': encoded_data}}
     response = lambda_handler(event, None)
-    # dummy_sudoku = 'sudoku'
-    # solver = SudokuSolver()
-    # solver.solve_sudoku()

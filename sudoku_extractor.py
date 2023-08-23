@@ -31,4 +31,5 @@ class SudokuExtractor:
         '''
         cells_images = self.utils.segment_image(self.sudoku_grid)
         sudoku_array = self.utils.predict_numbers(cells_images)
+        print(len(sudoku_array))
         return sudoku_array
