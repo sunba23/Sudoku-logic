@@ -12,11 +12,6 @@ from PIL import Image
 import numpy as np
 
 from sudoku_extractor import SudokuExtractor
-from sudoku_solver import SudokuSolver
-
-#TODO uncomment in lambda
-# dynamodb = boto3.resource('dynamodb')
-# table = dynamodb.Table('SudokuResults2')
 
 now = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
 
@@ -37,16 +32,6 @@ def lambda_handler(event, context):
     sudoku_response_array = sudoku
     print('sudoku array: ', sudoku_response_array)
     
-    #TODO uncomment in lambda
-    # item_id = str(uuid.uuid4())                     # create unique key for id
-    # table.put_item(                                 # add solution to the database
-    #     Item={
-    #         'ID': item_id,
-    #         'result': str(solved_image_data),
-    #         'resultTimestamp': now
-    #     }
-    # )
-    
     response_body = {'sudoku': sudoku_response_array}
         
     response = {
@@ -60,6 +45,9 @@ def lambda_handler(event, context):
 
 #TODO comment in lambda, here for testing
 if __name__ == '__main__':
+
+    current_directory = os.getcwd()
+    print("Current working directory:", current_directory)
 
     img_path = 'test_sudokus/5.jpg'
     with open(img_path, 'rb') as image_file:
