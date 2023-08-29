@@ -118,7 +118,7 @@ class Utils:
     def predict_numbers(self, cells_images):
         #! in lambda use tesseract lambda layer
         pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-        sudoku_array = []
+        sudoku_string = ''
         for cell_image in cells_images:
             cell_image = self.preprocess_cell_image(cell_image[:, :, 0])
             prediction = pytesseract.image_to_string(cell_image, config='--psm 10 -c tessedit_char_whitelist=123456789')
@@ -129,8 +129,10 @@ class Utils:
                     prediction = prediction[1]
                 elif prediction[-1] == '1':
                     prediction = prediction[-2]
-            sudoku_array.append(prediction)
+            if prediction == '':
+                prediction = '.'
+            # doing this because tesseract returns stuff like '1\n' instead of '1'
+            prediction = prediction.strip()
+            sudoku_string += prediction
 
-        # doing this because tesseract returns stuff like '1\n' instead of '1'
-        converted_sudoku = [cell.strip() for cell in sudoku_array]
-        return converted_sudoku
+        return sudoku_string

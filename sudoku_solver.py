@@ -39,7 +39,7 @@ class SudokuSolver:
         for i in range(9):
             for j in range(9):
                 char = self.sudoku[i * 9 + j]
-                if char != '':
+                if char != '.':
                     self.grid[i][j] = int(char)
 
     def solve_sudoku(self):
