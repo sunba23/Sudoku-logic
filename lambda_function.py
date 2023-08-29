@@ -46,8 +46,8 @@ def lambda_handler(event, context):
 #TODO comment in lambda, here for testing
 if __name__ == '__main__':
 
-    current_directory = os.getcwd()
-    print("Current working directory:", current_directory)
+    #current_directory = os.getcwd()
+    #print("Current working directory:", current_directory)
 
     img_path = 'test_sudokus/5.jpg'
     with open(img_path, 'rb') as image_file:

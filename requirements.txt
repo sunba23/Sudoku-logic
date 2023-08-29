@@ -1,3 +1,5 @@
-opencv-python
-tensorflow
-keras
+pillow
+numpy
+pandas
+opencv-python-headless
+pytesseract
