@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 import pandas as pd
-from keras.models import load_model
-from keras.datasets import mnist
+# from keras.models import load_model
+# from keras.datasets import mnist
 import pytesseract
 
 class Utils:
@@ -117,7 +117,7 @@ class Utils:
 
     def predict_numbers(self, cells_images):
         #! in lambda use tesseract lambda layer
-        pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+        # pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
         sudoku_string = ''
         for cell_image in cells_images:
             cell_image = self.preprocess_cell_image(cell_image[:, :, 0])

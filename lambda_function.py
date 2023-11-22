@@ -54,6 +54,9 @@ if __name__ == '__main__':
         image_data = image_file.read()
 
     encoded_data = base64.b64encode(image_data).decode('utf-8')
+    # save encoded_data to file named bruh.txt
+    with open('bruh.txt', 'w') as f:
+        f.write(encoded_data)
 
     event = {'body': {'image': encoded_data}}
     response = lambda_handler(event, None)
