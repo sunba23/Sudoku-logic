@@ -40,6 +40,3 @@ def lambda_handler(event, context):
 
     return response
 
-
-#TODO comment in lambda, here for testing
-# if __name__ == '__main__':

@@ -12,6 +12,7 @@ from PIL import Image
 import numpy as np
 
 from sudoku_extractor import SudokuExtractor
+from sudoku_solver import SudokuSolver
 
 now = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
 
@@ -33,7 +34,7 @@ def lambda_handler(event, context):
     print('sudoku array: ', sudoku_response_array)
     
     response_body = {'sudoku': sudoku_response_array}
-        
+    
     response = {
         'statusCode': 200,
         'headers': {'Content-Type': 'application/json'},
@@ -43,7 +44,7 @@ def lambda_handler(event, context):
     return response
 
 
-#TODO comment in lambda, here for testing
+# #TODO comment in lambda, here for testing
 if __name__ == '__main__':
 
     #current_directory = os.getcwd()
@@ -54,9 +55,13 @@ if __name__ == '__main__':
         image_data = image_file.read()
 
     encoded_data = base64.b64encode(image_data).decode('utf-8')
-    # save encoded_data to file named bruh.txt
-    with open('bruh.txt', 'w') as f:
-        f.write(encoded_data)
 
     event = {'body': {'image': encoded_data}}
     response = lambda_handler(event, None)
+
+    # solved_sudoku = SudokuSolver("6...7.5..98...41......6...843.....86..7..632.52.....4.3...9.2...14.8...9.6.24..5.").solved_sudoku
+    # solved_sudoku = flatten_extend(solved_sudoku)
+    # result = ""
+    # for number in solved_sudoku:
+    #     result += str(number)
+    # print(result)
