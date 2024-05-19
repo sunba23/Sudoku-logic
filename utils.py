@@ -1,8 +1,5 @@
 import cv2
 import numpy as np
-import pandas as pd
-# from keras.models import load_model
-# from keras.datasets import mnist
 import pytesseract
 
 class Utils:
@@ -34,14 +31,6 @@ class Utils:
 
     def transform_perspective(self, image, contour, side_length=300):
         corners = self.get_corner_points(contour)
-        # # drawing contour and corners for visualization
-        # img_copy = image.copy()
-        # img_copy = cv2.cvtColor(img_copy, cv2.COLOR_GRAY2BGR)
-        # cv2.drawContours(img_copy, [contour], -1, (30, 30, 100), 10)
-        # for corner in corners:  
-        #     cv2.circle(img_copy, tuple(corner), 10, (0, 255, 0), -1)
-        # cv2.imshow('image', cv2.resize(img_copy, (500, 500)))
-        # cv2.waitKey(0)
         pt_A, pt_B, pt_C, pt_D = corners[0], corners[1], corners[2], corners[3]
         input_pts = np.float32([pt_A, pt_B, pt_C, pt_D])
         output_pts = np.float32([[0, 0],
@@ -50,7 +39,7 @@ class Utils:
                         [side_length - 1, 0]])
         M = cv2.getPerspectiveTransform(input_pts,output_pts)
         transformed_image = cv2.warpPerspective(image,M,(side_length, side_length),flags=cv2.INTER_LINEAR)
-        transformed_image = cv2.flip(transformed_image, 1)  #TODO see why image is unflipped in the first place
+        transformed_image = cv2.flip(transformed_image, 1)
         return transformed_image
 
     @staticmethod
@@ -103,25 +92,33 @@ class Utils:
                 cell = sudoku_image[i*cell_side_length:(i+1)*cell_side_length, j*cell_side_length:(j+1)*cell_side_length]
                 cells.append(cell)
         return cells
+    
 
     @staticmethod
     def preprocess_cell_image(cell_image):
         # for tesseract to work properly, we need to preprocess the image
+        if len(cell_image.shape) == 3:
+            cell_image = cv2.cvtColor(cell_image, cv2.COLOR_BGR2GRAY)
+
         cell_image[cell_image < 30] = 0
         cell_image[cell_image >= 100] = 255
-        zoomed = Utils.zoom_at(cell_image, zoom=1.21)
-        denoised = cv2.fastNlMeansDenoising(zoomed, None, 10, 7, 21)
-        img_rgb = cv2.cvtColor(denoised, cv2.COLOR_GRAY2RGB)
-        bordered = cv2.copyMakeBorder(img_rgb, 4, 4, 4, 4, cv2.BORDER_CONSTANT, value=[0, 0, 0])
-        return bordered
+
+        line_image = cell_image.copy()
+        h, w = line_image.shape[:2]
+        border_size = 6
+        cv2.line(line_image, (0, 0), (w, 0), 255, border_size)
+        cv2.line(line_image, (0, h), (w, h), 255, border_size)
+        cv2.line(line_image, (0, 0), (0, h), 255, border_size)
+        cv2.line(line_image, (w, 0), (w, h), 255, border_size)
+
+        return line_image
 
     def predict_numbers(self, cells_images):
-        #! in lambda use tesseract lambda layer
-        # pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
         sudoku_string = ''
         for cell_image in cells_images:
-            cell_image = self.preprocess_cell_image(cell_image[:, :, 0])
             prediction = pytesseract.image_to_string(cell_image, config='--psm 10 -c tessedit_char_whitelist=123456789')
+            # doing this because tesseract returns stuff like '1\n' instead of '1'
+            prediction = prediction.strip()
             # if the prediction is neither a single digit or empty, then tesseract probably detected either the left or right border of the cell as '1'
             # and created something like '121' or '12' or '21' instead of '2'
             if len(prediction) > 1:
@@ -129,10 +126,9 @@ class Utils:
                     prediction = prediction[1]
                 elif prediction[-1] == '1':
                     prediction = prediction[-2]
-            if prediction == '':
+            if prediction == '' or int(prediction) > 9:
                 prediction = '.'
-            # doing this because tesseract returns stuff like '1\n' instead of '1'
-            prediction = prediction.strip()
             sudoku_string += prediction
 
         return sudoku_string
+    
